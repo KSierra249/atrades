@@ -1,5 +1,8 @@
 import express from "express";
 import cors from "cors";
+import { validateRequestBody } from "./validate-schema";
+import { SignInRequestSchema } from "./types/auth";
+import { signInHandler } from "./handlers/auth";
 
 const app = express();
 const PORT = 5000;
@@ -18,3 +21,9 @@ app.get("/api/hello", (_req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+app.post("/api/sign-in",
+  validateRequestBody(SignInRequestSchema),
+  signInHandler
+);
+
