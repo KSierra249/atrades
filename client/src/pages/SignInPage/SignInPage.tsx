@@ -49,7 +49,7 @@ const SignInPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 font-sans">
       <Card className="w-full max-w-md shadow-xl border-0 rounded-2xl p-0">
         <div className="p-10 flex flex-col items-center">
-          <h2 className="text-3xl font-extrabold mb-2 text-center tracking-tight text-gray-900">Sign In</h2>
+          <h2 className="text-3xl font-bold mb-2 text-center tracking-tight text-gray-900">Sign In</h2>
           <p className="mb-8 text-center text-gray-500 text-base">Welcome back! Please enter your credentials to sign in.</p>
           <form onSubmit={handleSubmit} className="w-full space-y-5">
             <Input
@@ -85,7 +85,7 @@ const SignInPage: React.FC = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 mt-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors text-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+              className="w-full py-3 mt-2 rounded-lg bg-red-700 hover:bg-red-600 transition-colors text-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
             >
               {isSubmitting ? 'Signing in...' : 'Sign In'}
             </Button>
