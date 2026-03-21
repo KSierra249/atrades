@@ -3,6 +3,8 @@ import cors from "cors";
 import { validateRequestBody } from "./validate-schema";
 import { SignInRequestSchema } from "./types/auth";
 import { signInHandler } from "./handlers/auth";
+import { CreateGoSpreadsheetRequestSchema } from "./types/go-spreadsheet";
+import { createGoSpreadsheetHandler } from "./handlers/go-spreadsheet";
 
 const app = express();
 const PORT = 5000;
@@ -25,5 +27,10 @@ app.listen(PORT, () => {
 app.post("/api/sign-in",
   validateRequestBody(SignInRequestSchema),
   signInHandler
+);
+
+app.post("/api/create-go-spreadsheet",
+  validateRequestBody(CreateGoSpreadsheetRequestSchema),
+  createGoSpreadsheetHandler
 );
 
