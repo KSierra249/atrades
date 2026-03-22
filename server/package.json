@@ -14,7 +14,8 @@
     "apify-client": "^2.22.3",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "firebase": "^12.10.0"
+    "firebase": "^12.10.0",
+    "openai": "^6.32.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
