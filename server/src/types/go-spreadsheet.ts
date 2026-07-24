@@ -13,21 +13,45 @@ export type Joiner = {
 export type Member = {
   name: string;
   emojis: string[];
+  amountOfSets: number;
+  unclaimed: number;
+  unclaimedSets: number[];
 }
 
 export type CaptionData = {
-  amountOfsets: number;
   joiners: Joiner[];
   members: Member[];
 }
 
+export type JoinerData = {
+  emoji: string;
+  username: string;
+  memberClaims: string[];
+  total: number;
+}
+
+export type MasterListData = {
+  storeName: string;
+  setName: string;
+  setFrom: string;
+  deadline: string;
+  pricePerCard: number;
+  totalPrice: number;
+  joinerData: JoinerData[];
+}
+
 export const CreateGoSpreadsheetRequestSchema = Type.Object({
-  url: Type.String()
+  url: Type.String(),
+  storeName: Type.String(),
+  setName: Type.String(),
+  setFrom: Type.String(),
+  deadline: Type.String(),
+  pricePerCard: Type.Number()
 });
 
 export type CreateGoSpreadsheetRequest = Static<typeof CreateGoSpreadsheetRequestSchema>;
 
 // wip
 export type CreateGoSpreadsheetResponse = ApiResponse<{
-  data: CaptionData;
+  data: MasterListData;
 }>;
