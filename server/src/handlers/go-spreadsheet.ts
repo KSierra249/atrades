@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { RequestHandler } from "express";
 import {
   CreateGoSpreadsheetRequest,
   CreateGoSpreadsheetResponse,
@@ -94,6 +94,9 @@ const extractCaptionData = async (caption: string): Promise<CaptionData> => {
   return JSON.parse(content) as CaptionData;
 };
 
+const isOtMember = (memberName: string): boolean =>
+  /^ot/i.test(memberName.trim());
+
 const getMemberClaimsData = (captionData: CaptionData): Map<string, string[]> => {
   const joinerEmojis = new Set(captionData.joiners.map(joiner => joiner.emoji));
   const memberClaims = new Map<string, string[]>(
@@ -109,46 +112,45 @@ const getMemberClaimsData = (captionData: CaptionData): Map<string, string[]> =>
     });
   });
 
-  captionData.members.forEach(unclaimedMember => {
-    unclaimedMember.unclaimedSets.forEach(setIndex => {
-      const eligibleEmojis = [
-        ...new Set(
-          captionData.members
-            .filter(member => member !== unclaimedMember)
-            .map(member => member.emojis[setIndex])
-            .filter(
-              (emoji): emoji is string =>
-                typeof emoji === 'string' &&
-                joinerEmojis.has(emoji) &&
-                !randomlySelectedEmojis.has(emoji)
-            )
-        )
-      ];
+  captionData.members
+    .filter(member => !isOtMember(member.name))
+    .forEach(unclaimedMember => {
+      unclaimedMember.unclaimedSets.forEach(setIndex => {
+        const eligibleEmojis = [
+          ...new Set(
+            captionData.members
+              .filter(
+                member =>
+                  member !== unclaimedMember && !isOtMember(member.name)
+              )
+              .map(member => member.emojis[setIndex])
+              .filter(
+                (emoji): emoji is string =>
+                  typeof emoji === 'string' &&
+                  joinerEmojis.has(emoji) &&
+                  !randomlySelectedEmojis.has(emoji)
+              )
+          )
+        ];
 
-      if (eligibleEmojis.length === 0) {
-        return;
-      }
+        if (eligibleEmojis.length === 0) {
+          return;
+        }
 
-      const selectedEmoji =
-        eligibleEmojis[Math.floor(Math.random() * eligibleEmojis.length)];
-      if (selectedEmoji) {
-        memberClaims.get(selectedEmoji)?.push(unclaimedMember.name);
-        randomlySelectedEmojis.add(selectedEmoji);
-      }
+        const selectedEmoji =
+          eligibleEmojis[Math.floor(Math.random() * eligibleEmojis.length)];
+        if (selectedEmoji) {
+          memberClaims.get(selectedEmoji)?.push(unclaimedMember.name);
+          randomlySelectedEmojis.add(selectedEmoji);
+        }
+      });
     });
-  });
 
   return memberClaims;
 };
 
 const getMemberCardCount = (memberName: string): number => {
-  const otMatch = memberName.trim().match(/^ot\s*(\d+)$/i);
-  if (!otMatch) {
-    return 1;
-  }
-
-  const cardCount = Number(otMatch[1]);
-  return Number.isSafeInteger(cardCount) && cardCount > 0 ? cardCount : 1;
+  return isOtMember(memberName) ? 8 : 1;
 };
 
 const getJoinerTotal = (
@@ -170,12 +172,18 @@ const getJoinerTotal = (
   let total = directCardCount * pricePerCard;
 
   const unclaimedSetIndexes = new Set(
-    captionData.members.flatMap(member => member.unclaimedSets)
+    captionData.members
+      .filter(member => !isOtMember(member.name))
+      .flatMap(member => member.unclaimedSets)
   );
 
   unclaimedSetIndexes.forEach(setIndex => {
     const unclaimedCardCount = captionData.members
-      .filter(member => member.unclaimedSets.includes(setIndex))
+      .filter(
+        member =>
+          !isOtMember(member.name) &&
+          member.unclaimedSets.includes(setIndex)
+      )
       .reduce(
         (cardCount, member) =>
           cardCount + getMemberCardCount(member.name),
@@ -184,6 +192,7 @@ const getJoinerTotal = (
 
     const sharingEmojis = new Set(
       captionData.members
+        .filter(member => !isOtMember(member.name))
         .map(member => member.emojis[setIndex])
         .filter(
           (emoji): emoji is string =>
@@ -200,10 +209,12 @@ const getJoinerTotal = (
 };
 
 const getJoinerData = (captionData: CaptionData, pricePerCard: number): JoinerData[] => {
+  const memberClaims = getMemberClaimsData(captionData);
+
   return captionData.joiners.map(joiner => ({
     emoji: joiner.emoji,
     username: joiner.username,
-    memberClaims: getMemberClaimsData(captionData).get(joiner.emoji) ?? [],
+    memberClaims: memberClaims.get(joiner.emoji) ?? [],
     total: getJoinerTotal(captionData, joiner.emoji, pricePerCard)
   }));
 };
@@ -223,20 +234,15 @@ const buildMasterListData = (
     setFrom,
     deadline,
     pricePerCard,
-    totalPrice: captionData.members.reduce(
-      (sum, member) =>
-        sum +
-        member.amountOfSets *
-          getMemberCardCount(member.name) *
-          pricePerCard,
-      0
+    totalPrice: Number(
+      joinerData.reduce((sum, joiner) => sum + joiner.total, 0).toFixed(2)
     ),
     joinerData,
   };
 };
 
-// wip
-export const createGoSpreadsheetHandler = async (req: Request<CreateGoSpreadsheetRequest>, res: Response<CreateGoSpreadsheetResponse>) => {
+
+export const createGoSpreadsheetHandler: RequestHandler = async (req, res) => {
   const {
     url,
     storeName,
@@ -244,7 +250,7 @@ export const createGoSpreadsheetHandler = async (req: Request<CreateGoSpreadshee
     setFrom,
     deadline,
     pricePerCard
-  } = req.body;
+  } = req.body as CreateGoSpreadsheetRequest;
 
   try {
     const caption = await getInstaCaption(url);
