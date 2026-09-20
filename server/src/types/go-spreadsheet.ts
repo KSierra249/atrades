@@ -42,6 +42,7 @@ export type MasterListData = {
 
 export const CreateGoSpreadsheetRequestSchema = Type.Object({
   url: Type.String(),
+  spreadsheetUrl: Type.String(),
   storeName: Type.String(),
   setName: Type.String(),
   setFrom: Type.String(),
@@ -51,7 +52,9 @@ export const CreateGoSpreadsheetRequestSchema = Type.Object({
 
 export type CreateGoSpreadsheetRequest = Static<typeof CreateGoSpreadsheetRequestSchema>;
 
-// wip
 export type CreateGoSpreadsheetResponse = ApiResponse<{
   data: MasterListData;
+  spreadsheetId: string;
+  spreadsheetUrl: string;
+  worksheetTitle: string;
 }>;

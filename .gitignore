@@ -1,1 +1,13 @@
 server/.env
+server/credentials.json
+server/token.json
+
+node_modules/
+client/node_modules/
+server/node_modules/
+client/dist/
+
+.DS_Store
+.vercel/
+client/.env
+client/.env.local

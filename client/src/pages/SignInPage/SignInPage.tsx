@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import Card from '../../components/Card/Card';
 import Status from '../../components/Status/Status';
-import Input from '../../components/Input/Input';
 import Button from '../../components/Button/Button';
-import { SignInRequest } from '../../../../server/src/types/auth';
-
+import SignInFormFields from '../../components/SignInFormFields/SignInFormFields';
+import {
+  INITIAL_SIGN_IN_VALUES,
+  type SignInField,
+  type SignInValues,
+} from '../../components/SignInFormFields/SignInFormFields.types';
+import type { SignInRequest } from '../../types/api';
 
 const signIn = async (payload: SignInRequest) => {
   try {
@@ -24,9 +28,12 @@ const signIn = async (payload: SignInRequest) => {
 const SignInPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [formValues, setFormValues] = useState<SignInValues>(INITIAL_SIGN_IN_VALUES);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const updateFormValue = (name: SignInField, value: string) => {
+    setFormValues(currentValues => ({ ...currentValues, [name]: value }));
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -34,7 +41,7 @@ const SignInPage: React.FC = () => {
     setSuccessMessage('');
     setIsSubmitting(true);
 
-    const payload: SignInRequest = { email: email, password: password };
+    const payload: SignInRequest = formValues;
     const response = await signIn(payload);
 
     if (response.kind === 'ok') {
@@ -52,25 +59,9 @@ const SignInPage: React.FC = () => {
           <h2 className="text-3xl font-bold mb-2 text-center tracking-tight text-gray-900">Sign In</h2>
           <p className="mb-8 text-center text-gray-500 text-base">Welcome back! Please enter your credentials to sign in.</p>
           <form onSubmit={handleSubmit} className="w-full space-y-5">
-            <Input
-              className=""
-              value={email}
-              setValue={setEmail}
-              id="email"
-              label="Email"
-              placeholder="Email"
-              required
-              autofocus={true}
-            />
-            <Input
-              className=""
-              value={password}
-              setValue={setPassword}
-              id="password"
-              label="Password"
-              placeholder="Password"
-              type="password"
-              required
+            <SignInFormFields
+              values={formValues}
+              onChange={updateFormValue}
             />
             {errorMessage && (
               <Status type="error" className="mt-2">

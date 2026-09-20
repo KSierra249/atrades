@@ -10,6 +10,7 @@ import {
 import { apifyClient } from "../apify";
 import { ApiError } from "../types/api-helper";
 import { openai } from "../open-ai";
+import { createGoogleWorksheet } from "../google-sheets";
 
 const getInstaCaption = async (url: string): Promise<string> => {
   const input = {
@@ -245,6 +246,7 @@ const buildMasterListData = (
 export const createGoSpreadsheetHandler: RequestHandler = async (req, res) => {
   const {
     url,
+    spreadsheetUrl,
     storeName,
     setName,
     setFrom,
@@ -264,12 +266,28 @@ export const createGoSpreadsheetHandler: RequestHandler = async (req, res) => {
       deadline,
       pricePerCard
     );
+    const spreadsheet = await createGoogleWorksheet(req, spreadsheetUrl, masterListData);
     const response: CreateGoSpreadsheetResponse = {
       kind: 'ok',
-      data: masterListData
+      data: masterListData,
+      ...spreadsheet
     };
     res.status(200).json(response);
   } catch (e) {
+    if (e instanceof Error && e.message === 'GOOGLE_AUTH_REQUIRED') {
+      res.status(401).json({
+        kind: 'error',
+        message: 'Connect your Google account before creating a spreadsheet.'
+      });
+      return;
+    }
+    if (e instanceof Error && e.message === 'INVALID_SPREADSHEET_URL') {
+      res.status(400).json({
+        kind: 'error',
+        message: 'Enter a valid Google Sheets link.'
+      });
+      return;
+    }
     const response: ApiError = {
       kind: 'error',
       message: e instanceof Error ? e.message : 'Unknown error'
